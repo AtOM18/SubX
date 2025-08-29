@@ -1,5 +1,7 @@
 import os
 import requests
+import sys
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from colorama import Fore, Style
 
@@ -18,18 +20,17 @@ facebook_access_token = os.getenv("FACEBOOK_ACCESS_TOKEN", "")
 binaryedge_api_key = os.getenv("BINARYEDGE_API_KEY", "")
 spyse_api_key = os.getenv("SPYSE_API_KEY", "")
 
-success = f"[{Fore.GREEN}✓{Style.RESET_ALL}] "
-info    = f"[{Fore.YELLOW}‣{Style.RESET_ALL}] "
-fail    = f"[{Fore.RED}×{Style.RESET_ALL}] "
+success = f"[{Fore.GREEN}✓{Style.RESET_ALL}]"
+info    = f"[{Fore.YELLOW}‣{Style.RESET_ALL}]"
+fail    = f"[{Fore.RED}×{Style.RESET_ALL}]"
 
 def safe_call(func):
-    def wrapper(domain, subdomains, errors=None):
+    def wrapper(domain, subdomains):
         try:
             func(domain, subdomains)
-        except Exception as e:
-            msg = f"[{func.__name__}] failed: {e}"
-            if errors is not None:
-                errors.append(msg)
+            return True
+        except Exception:
+            return False
     return wrapper
 
 @safe_call
@@ -278,33 +279,44 @@ def enum(domain, output=None, verbose=False):
         (binaryedge,       "BinaryEdge"),
     ]
 
+    status = [info for _ in functions]
+    lock = threading.Lock()
+
     if verbose:
         print(Fore.GREEN + "[*] Please, wait. Processing data..." + Style.RESET_ALL)
         for _, display_name in functions:
             print(f"{info} Gathering data from {display_name}…")
 
-    with ThreadPoolExecutor(max_workers=20) as executor:
-        futures = [executor.submit(func, domain, subdomains) for func, _ in functions]
-        try:
-            for future in futures:
-                future.result()
-        except KeyboardInterrupt:
-            executor.shutdown()
-            print("\n" + success + "Goodbye, friend!")
-            exit(0)
+    def run_api(idx, func, display_name):
+        ok = func(domain, subdomains)
+        with lock:
+            status[idx] = success if ok else fail
+            if verbose:
+                # Move cursor up to the correct line, overwrite it, then move back down
+                sys.stdout.write(f"\033[{len(functions)-idx}A")
+                sys.stdout.write("\r" + f"{status[idx]} Gathering data from {display_name}…" + " " * 10 + "\n")
+                sys.stdout.write(f"\033[{len(functions)-idx-1}B")
+                sys.stdout.flush()
+
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = []
+        for idx, (func, display_name) in enumerate(functions):
+            futures.append(executor.submit(run_api, idx, func, display_name))
+        for future in futures:
+            future.result()
 
     # remove TLD itself
     if domain in subdomains:
         subdomains.remove(domain)
 
     if output:
-        print("\n" + success + f"Saving {len(subdomains)} subdomains to {output}!")
+        print(f"\n{success} Saving {len(subdomains)} subdomains to {output}!")
         with open(output, 'w') as file:
             for sub in subdomains:
                 file.write(sub + "\n")
     else:
         for sub in subdomains:
             print(sub)
-        print("\n" + success + f"Found {len(subdomains)} subdomains:")
+        print(f"\n{success} Found {len(subdomains)} subdomains:")
 
     return
