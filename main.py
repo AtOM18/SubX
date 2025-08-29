@@ -25,6 +25,7 @@ def args():
     parser = argparse.ArgumentParser(usage="python3 subx.py [domain]",
                                      description="Passive subdomain enumeration tool for bug-bounty hunters & penetration testers.")
     parser.add_argument('-v', '--version', action='version', version='%(prog)s 1.0')
+    parser.add_argument('-V', '--verbose', action='store_true', help='Show verbose API progress')
     parser.add_argument('domain', metavar='[domain]', action='store', help='specifies the target domain')
     parser.add_argument("-o", "--output", action="store", dest="output", help="Specifies the output file.")
     return parser.parse_args()
@@ -33,4 +34,4 @@ if __name__ == "__main__":
     print(banner)
     arguments = args()
     print(success + "Target domain: " + Fore.GREEN + arguments.domain + Style.RESET_ALL + "\n")
-    enum(arguments.domain, arguments.output)
+    enum(arguments.domain, arguments.output, verbose=arguments.verbose)
