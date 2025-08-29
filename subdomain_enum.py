@@ -25,19 +25,19 @@ info    = f"[{Fore.YELLOW}‣{Style.RESET_ALL}]"
 fail    = f"[{Fore.RED}×{Style.RESET_ALL}]"
 
 def safe_call(func):
-    def wrapper(domain, subdomains):
+    def wrapper(domain, subdomains, timeout):
         try:
-            func(domain, subdomains)
+            func(domain, subdomains, timeout)
             return True
         except Exception:
             return False
     return wrapper
 
 @safe_call
-def certspotter(domain, subdomains):
+def certspotter(domain, subdomains, timeout):
     headers = {"Authorization": f"Bearer {certspotter_api_key}"}
     response = requests.get(f"https://api.certspotter.com/v1/issuances?domain={domain}&expand=dns_names",
-                            headers=headers, stream=True)
+                            headers=headers, stream=True, timeout=timeout)
     data = response.json()
     for dns_names in data:
         for dns_name in dns_names["dns_names"]:
@@ -45,8 +45,8 @@ def certspotter(domain, subdomains):
                 subdomains.append(dns_name)
 
 @safe_call
-def hackertarget(domain, subdomains):
-    response = requests.get(f"https://api.hackertarget.com/hostsearch/?q={domain}", stream=True)
+def hackertarget(domain, subdomains, timeout):
+    response = requests.get(f"https://api.hackertarget.com/hostsearch/?q={domain}", stream=True, timeout=timeout)
     lines = response.text.split("\n")
     for line in lines:
         sub = line.split(",")[0]
@@ -54,8 +54,8 @@ def hackertarget(domain, subdomains):
             subdomains.append(sub)
 
 @safe_call
-def shodan(domain, subdomains):
-    response = requests.get(f"https://api.shodan.io/dns/domain/{domain}?key={shodan_api_key}", stream=True)
+def shodan(domain, subdomains, timeout):
+    response = requests.get(f"https://api.shodan.io/dns/domain/{domain}?key={shodan_api_key}", stream=True, timeout=timeout)
     data = response.json()
     for sub in data.get("subdomains", []):
         fqdn = sub + "." + domain
@@ -63,16 +63,16 @@ def shodan(domain, subdomains):
             subdomains.append(fqdn)
 
 @safe_call
-def omnisint(domain, subdomains):
-    response = requests.get(f"https://sonar.omnisint.io/subdomains/{domain}", stream=True)
+def omnisint(domain, subdomains, timeout):
+    response = requests.get(f"https://sonar.omnisint.io/subdomains/{domain}", stream=True, timeout=timeout)
     data = response.json()
     for sub in data:
         if sub not in subdomains:
             subdomains.append(sub)
 
 @safe_call
-def dns_bufferover(domain, subdomains):
-    response = requests.get(f"https://dns.bufferover.run/dns?q=.{domain}", stream=True)
+def dns_bufferover(domain, subdomains, timeout):
+    response = requests.get(f"https://dns.bufferover.run/dns?q=.{domain}", stream=True, timeout=timeout)
     data = response.json()
     for line in data.get("FDNS_A", []):
         sub = line.split(",")[1]
@@ -80,8 +80,8 @@ def dns_bufferover(domain, subdomains):
             subdomains.append(sub)
 
 @safe_call
-def tls_bufferover(domain, subdomains):
-    response = requests.get(f"https://tls.bufferover.run/dns?q=.{domain}", stream=True)
+def tls_bufferover(domain, subdomains, timeout):
+    response = requests.get(f"https://tls.bufferover.run/dns?q=.{domain}", stream=True, timeout=timeout)
     data = response.json()
     for line in data.get("Results", []):
         sub = line.split(",")[2]
@@ -89,44 +89,44 @@ def tls_bufferover(domain, subdomains):
             subdomains.append(sub)
 
 @safe_call
-def sublist3r(domain, subdomains):
-    response = requests.get(f"https://api.sublist3r.com/search.php?domain={domain}", stream=True)
+def sublist3r(domain, subdomains, timeout):
+    response = requests.get(f"https://api.sublist3r.com/search.php?domain={domain}", stream=True, timeout=timeout)
     data = response.json()
     for sub in data:
         if sub not in subdomains:
             subdomains.append(sub)
 
 @safe_call
-def threatcrowd(domain, subdomains):
-    response = requests.get(f"https://www.threatcrowd.org/searchApi/v2/domain/report/?domain={domain}", stream=True)
+def threatcrowd(domain, subdomains, timeout):
+    response = requests.get(f"https://www.threatcrowd.org/searchApi/v2/domain/report/?domain={domain}", stream=True, timeout=timeout)
     data = response.json()
     for sub in data.get("subdomains", []):
         if sub not in subdomains:
             subdomains.append(sub)
 
 @safe_call
-def threatminer(domain, subdomains):
-    response = requests.get(f"https://api.threatminer.org/v2/domain.php?q={domain}&rt=5", stream=True)
+def threatminer(domain, subdomains, timeout):
+    response = requests.get(f"https://api.threatminer.org/v2/domain.php?q={domain}&rt=5", stream=True, timeout=timeout)
     data = response.json()
     for sub in data.get("results", []):
         if sub not in subdomains:
             subdomains.append(sub)
 
 @safe_call
-def virustotal(domain, subdomains):
+def virustotal(domain, subdomains, timeout):
     headers = {"x-apikey": virustotal_api_key}
     response = requests.get(f"https://www.virustotal.com/api/v3/domains/{domain}/subdomains",
-                            headers=headers, stream=True)
+                            headers=headers, stream=True, timeout=timeout)
     data = response.json()
     for sub in data.get("data", []):
         if sub["id"] not in subdomains:
             subdomains.append(sub["id"])
 
 @safe_call
-def securitytrails(domain, subdomains):
+def securitytrails(domain, subdomains, timeout):
     headers = {"apikey": "ITTUAQ0A0v4yzSbClTTySceSjPbwswsC"}
     response = requests.get(f"https://api.securitytrails.com/v1/domain/{domain}/subdomains",
-                            headers=headers, stream=True)
+                            headers=headers, stream=True, timeout=timeout)
     data = response.json()
     for sub in data.get("subdomains", []):
         fqdn = sub + "." + domain
@@ -134,24 +134,24 @@ def securitytrails(domain, subdomains):
             subdomains.append(fqdn)
 
 @safe_call
-def alienvault(domain, subdomains):
-    response = requests.get(f"https://otx.alienvault.com/api/v1/indicators/domain/{domain}/passive_dns", stream=True)
+def alienvault(domain, subdomains, timeout):
+    response = requests.get(f"https://otx.alienvault.com/api/v1/indicators/domain/{domain}/passive_dns", stream=True, timeout=timeout)
     data = response.json()
     for sub in data.get("passive_dns", []):
         if sub["hostname"] not in subdomains:
             subdomains.append(sub["hostname"])
 
 @safe_call
-def urlscan(domain, subdomains):
-    response = requests.get(f"https://urlscan.io/api/v1/search/?q=domain:{domain}", stream=True)
+def urlscan(domain, subdomains, timeout):
+    response = requests.get(f"https://urlscan.io/api/v1/search/?q=domain:{domain}", stream=True, timeout=timeout)
     data = response.json()
     for res in data.get("results", []):
         if res["page"]["domain"] not in subdomains:
             subdomains.append(res["page"]["domain"])
 
 @safe_call
-def crt(domain, subdomains):
-    response = requests.get(f"https://crt.sh/?q={domain}&output=json", stream=True)
+def crt(domain, subdomains, timeout):
+    response = requests.get(f"https://crt.sh/?q={domain}&output=json", stream=True, timeout=timeout)
     data = response.json()
     for res in data:
         for sub in res["name_value"].split("\n"):
@@ -159,18 +159,18 @@ def crt(domain, subdomains):
                 subdomains.append(sub)
 
 @safe_call
-def anubis(domain, subdomains):
-    response = requests.get(f"https://jldc.me/anubis/subdomains/{domain}", stream=True)
+def anubis(domain, subdomains, timeout):
+    response = requests.get(f"https://jldc.me/anubis/subdomains/{domain}", stream=True, timeout=timeout)
     data = response.json()
     for sub in data:
         if sub not in subdomains:
             subdomains.append(sub)
 
 @safe_call
-def dnsdb(domain, subdomains):
+def dnsdb(domain, subdomains, timeout):
     headers = {"Accept": "application/json", "Content-Type": "application/json", "X-API-Key": dnsdb_api_key}
     response = requests.get(f"https://api.dnsdb.info/lookup/rrset/name/*.{domain}?limit=1000000000",
-                            headers=headers, stream=True)
+                            headers=headers, stream=True, timeout=timeout)
     for line in response.text.split("\n"):
         if line.strip() == "":
             continue
@@ -180,8 +180,8 @@ def dnsdb(domain, subdomains):
             subdomains.append(sub)
 
 @safe_call
-def recondev(domain, subdomains):
-    response = requests.get(f"https://recon.dev/api/search?key={recondev_api_key}&domain={domain}", stream=True)
+def recondev(domain, subdomains, timeout):
+    response = requests.get(f"https://recon.dev/api/search?key={recondev_api_key}&domain={domain}", stream=True, timeout=timeout)
     data = response.json()
     for res in data:
         for sub in res["rawDomains"]:
@@ -189,10 +189,10 @@ def recondev(domain, subdomains):
                 subdomains.append(sub)
 
 @safe_call
-def passivetotal(domain, subdomains):
+def passivetotal(domain, subdomains, timeout):
     auth = (passivetotal_api_key, passivetotal_api_secret)
     response = requests.get(f"https://api.passivetotal.org/v2/enrichment/subdomains?query={domain}",
-                            auth=auth, stream=True)
+                            auth=auth, stream=True, timeout=timeout)
     data = response.json()
     for sub in data.get("subdomains", []):
         fqdn = sub + "." + domain
@@ -200,14 +200,14 @@ def passivetotal(domain, subdomains):
             subdomains.append(fqdn)
 
 @safe_call
-def censys(domain, subdomains):
+def censys(domain, subdomains, timeout):
     page = pages = 1
     while page <= pages:
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
         auth = (censys_api_id, censys_api_secret)
         data = {"query": domain, "page": page, "fields": ["parsed.names"]}
         response = requests.post("https://www.censys.io/api/v1/search/certificates",
-                                 headers=headers, json=data, auth=auth, stream=True)
+                                 headers=headers, json=data, auth=auth, stream=True, timeout=timeout)
         data = response.json()
         pages = data["metadata"]["pages"]
         for res in data["results"]:
@@ -218,9 +218,9 @@ def censys(domain, subdomains):
         page += 1
 
 @safe_call
-def riddler(domain, subdomains):
+def riddler(domain, subdomains, timeout):
     import csv
-    response = requests.get(f"https://riddler.io/search/exportcsv?q=pld:{domain}", stream=True)
+    response = requests.get(f"https://riddler.io/search/exportcsv?q=pld:{domain}", stream=True, timeout=timeout)
     data = csv.reader(line.decode('utf-8') for line in response.iter_lines())
     next(data)
     next(data)
@@ -229,10 +229,10 @@ def riddler(domain, subdomains):
             subdomains.append(row[4])
 
 @safe_call
-def facebook(domain, subdomains):
+def facebook(domain, subdomains, timeout):
     response = requests.get(
         f"https://graph.facebook.com/certificates?query={domain}&fields=domains&limit=10000&access_token={facebook_access_token}",
-        stream=True)
+        stream=True, timeout=timeout)
     data = response.json()
     for res in data.get("data", []):
         for sub in res["domains"]:
@@ -240,12 +240,12 @@ def facebook(domain, subdomains):
                 subdomains.append(sub)
 
 @safe_call
-def binaryedge(domain, subdomains):
+def binaryedge(domain, subdomains, timeout):
     page = pages = 1
     while page <= pages:
         headers = {"X-Key": binaryedge_api_key}
         response = requests.get(f"https://api.binaryedge.io/v2/query/domains/subdomain/{domain}?page={page}",
-                                headers=headers, stream=True)
+                                headers=headers, stream=True, timeout=timeout)
         data = response.json()
         pages = data.get("pagesize", 1)
         for sub in data.get("events", []):
@@ -253,7 +253,7 @@ def binaryedge(domain, subdomains):
                 subdomains.append(sub)
         page += 1
 
-def enum(domain, output=None, verbose=False):
+def enum(domain, output=None, verbose=False, threads=10, timeout=10):
     subdomains = []
     functions = [
         (certspotter,      "Cert Spotter"),
@@ -288,7 +288,7 @@ def enum(domain, output=None, verbose=False):
             print(f"{info} Gathering data from {display_name}…")
 
     def run_api(idx, func, display_name):
-        ok = func(domain, subdomains)
+        ok = func(domain, subdomains, timeout)
         with lock:
             status[idx] = success if ok else fail
             if verbose:
@@ -298,7 +298,7 @@ def enum(domain, output=None, verbose=False):
                 sys.stdout.write(f"\033[{len(functions)-idx-1}B")
                 sys.stdout.flush()
 
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=threads) as executor:
         futures = []
         for idx, (func, display_name) in enumerate(functions):
             futures.append(executor.submit(run_api, idx, func, display_name))
