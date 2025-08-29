@@ -22,24 +22,35 @@ banner = f"""
 success = f"[{Fore.GREEN}✓{Style.RESET_ALL}] "
 
 def args():
-    parser = argparse.ArgumentParser(usage="python3 subx.py [domain]",
-                                     description="Passive subdomain enumeration tool for bug-bounty hunters & penetration testers.")
-    parser.add_argument('-v', '--version', action='version', version='%(prog)s 1.0')
-    parser.add_argument('-V', '--verbose', action='store_true', help='Show verbose API progress')
+    parser = argparse.ArgumentParser(
+        usage="python3 subx.py [options] [domain]",
+        description="Passive subdomain enumeration tool for bug-bounty hunters & penetration testers."
+    )
+    parser.add_argument('-V', '--version', action='version', version='%(prog)s 1.0')
+    parser.add_argument('-v', '--verbose', action='store_true', help='Show verbose API progress')
     parser.add_argument('--threads', type=int, default=10, help='Number of concurrent threads (default: 10)')
     parser.add_argument('--timeout', type=int, default=10, help='Timeout for each API request in seconds (default: 10)')
-    parser.add_argument('domain', metavar='[domain]', action='store', help='specifies the target domain')
-    parser.add_argument("-o", "--output", action="store", dest="output", help="Specifies the output file.")
+    parser.add_argument('-o', '--output', action='store', dest='output', help='Specifies the output file.')
+    parser.add_argument('-m', '--mode', type=int, default=0, help='Mode: 0 = subdomain enumeration (default)')
+    parser.add_argument('domain', metavar='[domain]', nargs='?', help='Specifies the target domain')
     return parser.parse_args()
 
 if __name__ == "__main__":
     print(banner)
     arguments = args()
-    print(success + "Target domain: " + Fore.GREEN + arguments.domain + Style.RESET_ALL + "\n")
-    enum(
-        arguments.domain,
-        arguments.output,
-        verbose=arguments.verbose,
-        threads=arguments.threads,
-        timeout=arguments.timeout
-    )
+
+    if arguments.mode == 0:
+        if not arguments.domain:
+            print(f"{Fore.RED}Error: Please specify a domain for subdomain enumeration.{Style.RESET_ALL}")
+            print("Use -h for help.")
+        else:
+            print(success + "Target domain: " + Fore.GREEN + arguments.domain + Style.RESET_ALL + "\n")
+            enum(
+                arguments.domain,
+                arguments.output,
+                verbose=arguments.verbose,
+                threads=arguments.threads,
+                timeout=arguments.timeout
+            )
+    else:
+        print(f"{Fore.RED}Error: Unsupported mode selected. Only mode 0 (subdomain enumeration) is implemented.{Style.RESET_ALL}")
