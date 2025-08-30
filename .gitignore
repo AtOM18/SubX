@@ -1,3 +1,4 @@
 .env
 .venv
 subdomains.txt
+subdomains.txt.csv
