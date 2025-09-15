@@ -61,22 +61,6 @@ usage: python3 subx.py [options] [domain]
 Passive subdomain enumeration tool for bug-bounty hunters & penetration testers.
 ```
 
-### Parser options
-
-```py
-parser = argparse.ArgumentParser(
-    usage="python3 subx.py [options] [domain]",
-    description="Passive subdomain enumeration tool for bug-bounty hunters & penetration testers."
-)
-parser.add_argument('-V', '--version', action='version', version='%(prog)s 1.0')
-parser.add_argument('-v', '--verbose', action='store_true', help='Show verbose API progress')
-parser.add_argument('-t','--threads', type=int, default=20, help='Number of concurrent threads (default: 20)')
-parser.add_argument('--timeout', type=int, default=10, help='Timeout for each API request in seconds (default: 10)')
-parser.add_argument('-o', '--output', action='store', dest='output', help='Specifies the output file.')
-parser.add_argument('-m', '--mode', type=int, default=0, 
-                   help='Mode: 0 = subdomain enumeration (default), 1 = subdomain enumeration + live probe, 2 = screenshots, 3 = visualize clusters')
-parser.add_argument('domain', metavar='[domain]', nargs='?', help='Specifies the target domain')
-```
 
 ### Modes
 
